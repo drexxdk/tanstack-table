@@ -1,5 +1,5 @@
 "use client";
-import React, { Fragment, useEffect, useRef, useState } from "react";
+import React, { Fragment, ReactNode, useEffect, useState } from "react";
 import {
   ColumnDef,
   flexRender,
@@ -33,6 +33,16 @@ export default function TableClient({
   const [data, setData] = useState<Assignment[]>(initialData);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
+  const ellipsis = (children: ReactNode) => {
+    return (
+      <span className="absolute inset-0 py-2 px-4 flex items-center">
+        <span className="whitespace-nowrap overflow-hidden text-ellipsis">
+          {children}
+        </span>
+      </span>
+    );
+  };
+
   const columns = React.useMemo<ColumnDef<Assignment>[]>(
     () => [
       {
@@ -51,10 +61,12 @@ export default function TableClient({
         accessorKey: "groups",
         cell: (info) => {
           const links = info.getValue<Link[]>();
+          const text =
+            links.length > 2
+              ? `${links[0].title} og ${links.length - 1} mere`
+              : links.map((link) => link.title).join(" og ");
 
-          return links.length > 2
-            ? `${links[0].title} og ${links.length - 1} mere`
-            : links.map((link) => link.title).join(" og ");
+          return ellipsis(text);
         },
         header: "Hold/klasse",
       },
@@ -62,7 +74,8 @@ export default function TableClient({
         accessorKey: "subject",
         cell: (info) => {
           const link = info.getValue<Link>();
-          return (
+
+          return ellipsis(
             <a href={link.url} target="_blank">
               {link.title}
             </a>
@@ -74,7 +87,8 @@ export default function TableClient({
         accessorKey: "portal",
         cell: (info) => {
           const link = info.getValue<Link>();
-          return (
+
+          return ellipsis(
             <a href={link.url} target="_blank">
               {link.title}
             </a>
@@ -86,7 +100,8 @@ export default function TableClient({
         accessorKey: "learningMaterial",
         cell: (info) => {
           const link = info.getValue<Link>();
-          return (
+
+          return ellipsis(
             <a href={link.url} target="_blank" className="font-bold">
               {link.title}
             </a>
@@ -98,9 +113,11 @@ export default function TableClient({
         accessorKey: "period",
         cell: (info) => {
           const period = info.getValue<Period>();
-          return `${new Date(period.start).toLocaleDateString(
+          const text = `${new Date(period.start).toLocaleDateString(
             LOCALE
           )} - ${new Date(period.end).toLocaleDateString(LOCALE)}`;
+
+          return text;
         },
         header: "Periode",
       },
@@ -214,9 +231,8 @@ export default function TableClient({
                           className={classNames(
                             "border-b border-gray-500 py-2 px-4 relative whitespace-nowrap",
                             "after:content after:absolute after:right-0 after:w-px after:bg-black after:h-4 after:top-1/2 after:-translate-y-1/2",
-                            cell.column.id === "learningMaterial"
-                              ? "w-full"
-                              : ""
+                            { "w-full": cell.column.id === "learningMaterial" }
+                            // { "min-w-48": cell.column.id === "period" }
                           )}
                         >
                           {flexRender(
