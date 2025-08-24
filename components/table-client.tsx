@@ -127,7 +127,7 @@ export default function TableClient({
       const columns = table.getAllColumns();
       columns.forEach((column) => {
         const id = column.id;
-        if (width < 500) {
+        if (width < 920) {
           column.toggleVisibility(id !== "groups");
         } else {
           column.toggleVisibility(true);
@@ -157,8 +157,7 @@ export default function TableClient({
 
   return (
     <div className="w-full max-w-7xl bg-white p-4">
-      {/* overflow-hidden */}
-      <div className="w-full" ref={ref}>
+      <div className="w-full overflow-hidden" ref={ref}>
         <table className="w-full border-separate border-spacing-0">
           <thead className="bg-white sticky top-0 z-10 ">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -166,7 +165,7 @@ export default function TableClient({
                 {headerGroup.headers.map((header, i) => {
                   return i === 0 &&
                     hasHiddenColumns(table.getRowModel().rows[0]) === false ? (
-                    <></>
+                    <Fragment key={header.id}></Fragment>
                   ) : (
                     <th
                       key={header.id}
@@ -208,11 +207,17 @@ export default function TableClient({
                   <tr>
                     {row.getVisibleCells().map((cell, i) => {
                       return i === 0 && hasHiddenColumns(row) === false ? (
-                        <></>
+                        <Fragment key={cell.id}></Fragment>
                       ) : (
                         <td
                           key={cell.id}
-                          className="border-b border-gray-500 py-2 px-4 relative after:content after:absolute after:right-0 after:w-px after:bg-black after:h-4 after:top-1/2 after:-translate-y-1/2"
+                          className={classNames(
+                            "border-b border-gray-500 py-2 px-4 relative whitespace-nowrap",
+                            "after:content after:absolute after:right-0 after:w-px after:bg-black after:h-4 after:top-1/2 after:-translate-y-1/2",
+                            cell.column.id === "learningMaterial"
+                              ? "w-full"
+                              : ""
+                          )}
                         >
                           {flexRender(
                             cell.column.columnDef.cell,
@@ -289,9 +294,9 @@ export default function TableClient({
             })}
           </tbody>
         </table>
-        <div className="h-2" />
-        <button onClick={() => refreshData()}>Refresh Data</button>
       </div>
+      <div className="h-2" />
+      <button onClick={() => refreshData()}>Refresh Data</button>
     </div>
   );
 }
