@@ -120,37 +120,42 @@ export default function Table() {
   }
 
   return (
-    <div className="w-full max-w-7xl bg-white p-4">
-      {groups.length && (
-        <select
-          onChange={(event) =>
-            setColumnFilters([
-              ...columnFilters,
-              { id: "groups", value: event.target.value },
-            ])
-          }
-        >
-          <option value="">Hold/klasse</option>
-          {groups.map((group, i) => (
-            <option key={i}>{group.title}</option>
-          ))}
-        </select>
+    <div className="w-full max-w-7xl bg-white p-4 grid gap-4">
+      {(groups.length || subjects.length) && (
+        <div className="flex gap-4">
+          {groups.length && (
+            <select
+              onChange={(event) =>
+                setColumnFilters([
+                  ...columnFilters,
+                  { id: "groups", value: event.target.value },
+                ])
+              }
+            >
+              <option value="">Hold/klasse</option>
+              {groups.map((group, i) => (
+                <option key={i}>{group.title}</option>
+              ))}
+            </select>
+          )}
+          {subjects.length && (
+            <select
+              onChange={(event) =>
+                setColumnFilters([
+                  ...columnFilters,
+                  { id: "subject", value: event.target.value },
+                ])
+              }
+            >
+              <option value="">Fag</option>
+              {subjects.map((subject, i) => (
+                <option key={i}>{subject.title}</option>
+              ))}
+            </select>
+          )}
+        </div>
       )}
-      {subjects.length && (
-        <select
-          onChange={(event) =>
-            setColumnFilters([
-              ...columnFilters,
-              { id: "subject", value: event.target.value },
-            ])
-          }
-        >
-          <option value="">Fag</option>
-          {subjects.map((subject, i) => (
-            <option key={i}>{subject.title}</option>
-          ))}
-        </select>
-      )}
+
       <div className="w-full overflow-hidden" ref={ref}>
         <table className="w-full border-separate border-spacing-0">
           <thead className="bg-white sticky top-0 z-10 ">
@@ -253,14 +258,15 @@ export default function Table() {
           </tbody>
         </table>
       </div>
-      <div className="h-2" />
-      <button
-        onClick={() => refreshData()}
-        className="bg-blue-500 text-white flex gap-2 items-center text-base px-4 py-2 cursor-pointer hover:bg-blue-400 rounded"
-      >
-        Refresh
-        <FaArrowRotateRight />
-      </button>
+      <div>
+        <button
+          onClick={() => refreshData()}
+          className="bg-blue-500 text-white flex gap-2 items-center text-base px-4 py-2 cursor-pointer hover:bg-blue-400 rounded"
+        >
+          Refresh
+          <FaArrowRotateRight />
+        </button>
+      </div>
     </div>
   );
 }
