@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-table";
 import { Assignment, Period, Link } from "@/interfaces/assignment.interface";
 import {
+  FaArrowRotateRight,
   FaArrowUpRightFromSquare,
   FaCircleMinus,
   FaCirclePlus,
@@ -24,7 +25,7 @@ import { useResizeDetector } from "react-resize-detector";
 
 const LOCALE = "da-DK";
 
-export async function GetTableData() {
+async function getTableData() {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_ROOT}table/`, {
     method: "GET",
     headers: {
@@ -34,14 +35,14 @@ export async function GetTableData() {
   return (await res.json()) as Assignment[];
 }
 
-export default function TableClient() {
+export default function Table() {
   const [data, setData] = useState<Assignment[]>([]);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const columns = useColumns({ expandedRows, setExpandedRows });
 
   useEffect(() => {
     async function fetchData() {
-      const initialData = await GetTableData();
+      const initialData = await getTableData();
       setData(initialData);
     }
     fetchData();
@@ -77,7 +78,7 @@ export default function TableClient() {
 
   const refreshData = async () => {
     setExpandedRows({});
-    setData(await GetTableData());
+    setData(await getTableData());
   };
 
   if (!data.length) {
@@ -189,13 +190,29 @@ export default function TableClient() {
         </table>
       </div>
       <div className="h-2" />
-      <button onClick={() => refreshData()}>Refresh Data</button>
+      <button
+        onClick={() => refreshData()}
+        className="bg-blue-500 text-white flex gap-2 items-center text-base px-4 py-2 cursor-pointer hover:bg-blue-400 rounded"
+      >
+        Refresh
+        <FaArrowRotateRight />
+      </button>
     </div>
   );
 }
 
 const hasHiddenColumns = (row: Row<Assignment>) => {
   return row.getAllCells().some((cell) => !cell.column.getIsVisible());
+};
+
+const Ellipsis = ({ children }: { children: ReactNode }) => {
+  return (
+    <span className="absolute inset-0 py-2 px-4 flex items-center">
+      <span className="whitespace-nowrap overflow-hidden text-ellipsis">
+        {children}
+      </span>
+    </span>
+  );
 };
 
 const useColumns = ({
@@ -212,16 +229,6 @@ const useColumns = ({
       ...prev,
       [rowId]: !prev[rowId],
     }));
-  };
-
-  const ellipsis = (children: ReactNode) => {
-    return (
-      <span className="absolute inset-0 py-2 px-4 flex items-center">
-        <span className="whitespace-nowrap overflow-hidden text-ellipsis">
-          {children}
-        </span>
-      </span>
-    );
   };
 
   return [
@@ -248,7 +255,7 @@ const useColumns = ({
           links.length > 2
             ? `${links[0].title} og ${links.length - 1} mere`
             : links.map((link) => link.title).join(" og ");
-        return ellipsis(text);
+        return <Ellipsis>{text}</Ellipsis>;
       },
       header: "Hold/klasse",
     },
@@ -257,10 +264,12 @@ const useColumns = ({
       cell: (info) => {
         const link = info.getValue<Link>();
 
-        return ellipsis(
-          <a href={link.url} target="_blank">
-            {link.title}
-          </a>
+        return (
+          <Ellipsis>
+            <a href={link.url} target="_blank">
+              {link.title}
+            </a>
+          </Ellipsis>
         );
       },
       header: "Fag",
@@ -270,10 +279,12 @@ const useColumns = ({
       cell: (info) => {
         const link = info.getValue<Link>();
 
-        return ellipsis(
-          <a href={link.url} target="_blank">
-            {link.title}
-          </a>
+        return (
+          <Ellipsis>
+            <a href={link.url} target="_blank">
+              {link.title}
+            </a>
+          </Ellipsis>
         );
       },
       header: "Læremiddel",
@@ -283,10 +294,12 @@ const useColumns = ({
       cell: (info) => {
         const link = info.getValue<Link>();
 
-        return ellipsis(
-          <a href={link.url} target="_blank" className="font-bold">
-            {link.title}
-          </a>
+        return (
+          <Ellipsis>
+            <a href={link.url} target="_blank" className="font-bold">
+              {link.title}
+            </a>
+          </Ellipsis>
         );
       },
       header: "Titel",
