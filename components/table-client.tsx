@@ -32,98 +32,7 @@ export default function TableClient({
 }) {
   const [data, setData] = useState<Assignment[]>(initialData);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
-
-  const ellipsis = (children: ReactNode) => {
-    return (
-      <span className="absolute inset-0 py-2 px-4 flex items-center">
-        <span className="whitespace-nowrap overflow-hidden text-ellipsis">
-          {children}
-        </span>
-      </span>
-    );
-  };
-
-  const columns = React.useMemo<ColumnDef<Assignment>[]>(
-    () => [
-      {
-        id: "expander",
-        header: () => null,
-        cell: ({ row }) =>
-          hasHiddenColumns(row) ? (
-            <button onClick={() => toggleRow(row.id)}>
-              {expandedRows[row.id] ? <FaCircleMinus /> : <FaCirclePlus />}
-            </button>
-          ) : null,
-        enableSorting: false,
-        enableHiding: false,
-      },
-      {
-        accessorKey: "groups",
-        cell: (info) => {
-          const links = info.getValue<Link[]>();
-          const text =
-            links.length > 2
-              ? `${links[0].title} og ${links.length - 1} mere`
-              : links.map((link) => link.title).join(" og ");
-
-          return ellipsis(text);
-        },
-        header: "Hold/klasse",
-      },
-      {
-        accessorKey: "subject",
-        cell: (info) => {
-          const link = info.getValue<Link>();
-
-          return ellipsis(
-            <a href={link.url} target="_blank">
-              {link.title}
-            </a>
-          );
-        },
-        header: "Fag",
-      },
-      {
-        accessorKey: "portal",
-        cell: (info) => {
-          const link = info.getValue<Link>();
-
-          return ellipsis(
-            <a href={link.url} target="_blank">
-              {link.title}
-            </a>
-          );
-        },
-        header: "Læremiddel",
-      },
-      {
-        accessorKey: "learningMaterial",
-        cell: (info) => {
-          const link = info.getValue<Link>();
-
-          return ellipsis(
-            <a href={link.url} target="_blank" className="font-bold">
-              {link.title}
-            </a>
-          );
-        },
-        header: "Titel",
-      },
-      {
-        accessorKey: "period",
-        cell: (info) => {
-          const period = info.getValue<Period>();
-          const text = `${new Date(period.start).toLocaleDateString(
-            LOCALE
-          )} - ${new Date(period.end).toLocaleDateString(LOCALE)}`;
-
-          return text;
-        },
-        header: "Periode",
-      },
-    ],
-    [expandedRows]
-  );
+  const columns = useColumns({ expandedRows, setExpandedRows });
 
   const { width, ref } = useResizeDetector({
     refreshMode: "throttle",
@@ -152,17 +61,6 @@ export default function TableClient({
       });
     }
   }, [ref, table, width]);
-
-  const toggleRow = (rowId: string) => {
-    setExpandedRows((prev) => ({
-      ...prev,
-      [rowId]: !prev[rowId],
-    }));
-  };
-
-  const hasHiddenColumns = (row: Row<Assignment>) => {
-    return row.getAllCells().some((cell) => !cell.column.getIsVisible());
-  };
 
   const refreshData = async () => {
     setData(await GetTableData());
@@ -213,7 +111,6 @@ export default function TableClient({
                     </th>
                   );
                 })}
-                <th className="border-b border-gray-500"></th>
               </tr>
             ))}
           </thead>
@@ -230,9 +127,11 @@ export default function TableClient({
                           key={cell.id}
                           className={classNames(
                             "border-b border-gray-500 py-2 px-4 relative whitespace-nowrap",
-                            "after:content after:absolute after:right-0 after:w-px after:bg-black after:h-4 after:top-1/2 after:-translate-y-1/2",
+                            {
+                              "before:content before:absolute before:left-0 before:w-px before:bg-black before:h-4 before:top-1/2 before:-translate-y-1/2":
+                                i !== 0,
+                            },
                             { "w-full": cell.column.id === "learningMaterial" }
-                            // { "min-w-48": cell.column.id === "period" }
                           )}
                         >
                           {flexRender(
@@ -242,38 +141,6 @@ export default function TableClient({
                         </td>
                       );
                     })}
-                    <td className="py-2 pl-4 border-b border-gray-500">
-                      <div className="flex gap-2">
-                        {row.original.externalManagement ? (
-                          <button
-                            onClick={() =>
-                              alert(`External management: ${row.original.id}`)
-                            }
-                            className="bg-blue-500 text-white flex gap-2 items-center text-base px-4 py-2 cursor-pointer hover:bg-blue-400 rounded"
-                          >
-                            Åbn
-                            <FaArrowUpRightFromSquare />
-                          </button>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => alert(`Edit: ${row.original.id}`)}
-                              className="bg-blue-500 text-white text-base p-2.5 cursor-pointer hover:bg-blue-400 rounded"
-                            >
-                              <FaPen />
-                            </button>
-                            <button
-                              onClick={() =>
-                                alert(`Delete: ${row.original.id}`)
-                              }
-                              className="bg-white text-black text-base p-2.5 cursor-pointer hover:bg-gray-100 inset-ring inset-ring-blue-500 rounded"
-                            >
-                              <FaRegTrashCan />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </td>
                   </tr>
                   {expandedRows[row.id] && (
                     <tr>
@@ -282,26 +149,38 @@ export default function TableClient({
                         colSpan={row.getVisibleCells().length - 1}
                         className="py-2 px-4"
                       >
-                        <div>
-                          {row
-                            .getAllCells()
-                            .filter((cell) => !cell.column.getIsVisible())
-                            .map((cell) => (
-                              <table key={cell.id}>
-                                <tr>
-                                  <th className="font-bold">
-                                    {cell.column.columnDef.header?.toString()}:
-                                  </th>
-                                  <td>
-                                    {flexRender(
-                                      cell.column.columnDef.cell,
-                                      cell.getContext()
-                                    )}
-                                  </td>
-                                </tr>
-                              </table>
-                            ))}
-                        </div>
+                        <table className="w-full">
+                          <tbody>
+                            {row
+                              .getAllCells()
+                              .filter((cell) => !cell.column.getIsVisible())
+                              .map((cell) => {
+                                const value = cell.getValue<Link[]>();
+
+                                if (cell.column.id === "groups") {
+                                  const xd = flexRender(
+                                    cell.column.columnDef.cell,
+                                    cell.getContext()
+                                  );
+                                  debugger;
+                                }
+                                return (
+                                  <tr key={cell.id + "a"}>
+                                    <th className="font-bold">
+                                      {cell.column.columnDef.header?.toString()}
+                                      :
+                                    </th>
+                                    <td className="relative w-full">
+                                      {flexRender(
+                                        cell.column.columnDef.cell,
+                                        cell.getContext()
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                          </tbody>
+                        </table>
                       </td>
                     </tr>
                   )}
@@ -316,3 +195,150 @@ export default function TableClient({
     </div>
   );
 }
+
+const hasHiddenColumns = (row: Row<Assignment>) => {
+  return row.getAllCells().some((cell) => !cell.column.getIsVisible());
+};
+
+const useColumns = ({
+  expandedRows,
+  setExpandedRows,
+}: {
+  expandedRows: Record<string, boolean>;
+  setExpandedRows: React.Dispatch<
+    React.SetStateAction<Record<string, boolean>>
+  >;
+}): ColumnDef<Assignment>[] => {
+  const toggleRow = (rowId: string) => {
+    setExpandedRows((prev) => ({
+      ...prev,
+      [rowId]: !prev[rowId],
+    }));
+  };
+
+  const ellipsis = (children: ReactNode) => {
+    return (
+      <span className="absolute inset-0 py-2 px-4 flex items-center">
+        <span className="whitespace-nowrap overflow-hidden text-ellipsis">
+          {children}
+        </span>
+      </span>
+    );
+  };
+
+  return [
+    {
+      id: "expander",
+      header: () => null,
+      cell: ({ row }) =>
+        hasHiddenColumns(row) ? (
+          <button
+            onClick={() => toggleRow(row.id)}
+            className="block p-2 cursor-pointer"
+          >
+            {expandedRows[row.id] ? <FaCircleMinus /> : <FaCirclePlus />}
+          </button>
+        ) : null,
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "groups",
+      cell: (info) => {
+        const links = info.getValue<Link[]>();
+        const text =
+          links.length > 2
+            ? `${links[0].title} og ${links.length - 1} mere`
+            : links.map((link) => link.title).join(" og ");
+        return ellipsis(text);
+      },
+      header: "Hold/klasse",
+    },
+    {
+      accessorKey: "subject",
+      cell: (info) => {
+        const link = info.getValue<Link>();
+
+        return ellipsis(
+          <a href={link.url} target="_blank">
+            {link.title}
+          </a>
+        );
+      },
+      header: "Fag",
+    },
+    {
+      accessorKey: "portal",
+      cell: (info) => {
+        const link = info.getValue<Link>();
+
+        return ellipsis(
+          <a href={link.url} target="_blank">
+            {link.title}
+          </a>
+        );
+      },
+      header: "Læremiddel",
+    },
+    {
+      accessorKey: "learningMaterial",
+      cell: (info) => {
+        const link = info.getValue<Link>();
+
+        return ellipsis(
+          <a href={link.url} target="_blank" className="font-bold">
+            {link.title}
+          </a>
+        );
+      },
+      header: "Titel",
+    },
+    {
+      accessorKey: "period",
+      cell: (info) => {
+        const period = info.getValue<Period>();
+        const text = `${new Date(period.start).toLocaleDateString(
+          LOCALE
+        )} - ${new Date(period.end).toLocaleDateString(LOCALE)}`;
+
+        return text;
+      },
+      header: "Periode",
+    },
+    {
+      accessorKey: "id",
+      cell: ({ row }) => {
+        return (
+          <div className="flex gap-2">
+            {row.original.externalManagement ? (
+              <button
+                onClick={() => alert(`External management: ${row.original.id}`)}
+                className="bg-blue-500 text-white flex gap-2 items-center text-base px-4 py-2 cursor-pointer hover:bg-blue-400 rounded"
+              >
+                Åbn
+                <FaArrowUpRightFromSquare />
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => alert(`Edit: ${row.original.id}`)}
+                  className="bg-blue-500 text-white text-base p-2.5 cursor-pointer hover:bg-blue-400 rounded"
+                >
+                  <FaPen />
+                </button>
+                <button
+                  onClick={() => alert(`Delete: ${row.original.id}`)}
+                  className="bg-white text-black text-base p-2.5 cursor-pointer hover:bg-gray-100 inset-ring inset-ring-blue-500 rounded"
+                >
+                  <FaRegTrashCan />
+                </button>
+              </>
+            )}
+          </div>
+        );
+      },
+      header: "",
+      enableSorting: false,
+    },
+  ];
+};
