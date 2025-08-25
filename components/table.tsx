@@ -2,8 +2,10 @@
 import React, { Fragment, ReactNode, useEffect, useState } from "react";
 import {
   ColumnDef,
+  ColumnFiltersState,
   flexRender,
   getCoreRowModel,
+  getFilteredRowModel,
   getSortedRowModel,
   Row,
   useReactTable,
@@ -39,6 +41,12 @@ export default function Table() {
   const [data, setData] = useState<Assignment[]>([]);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const columns = useColumns({ expandedRows, setExpandedRows });
+  const [groups, setGroups] = useState<Link[]>([]);
+  const [subjects, setSubjects] = useState<Link[]>([]);
+
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
 
   useEffect(() => {
     async function fetchData() {
@@ -48,6 +56,27 @@ export default function Table() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    setGroups(
+      [
+        ...new Map(
+          data
+            .map((elem) => elem.groups)
+            .flat()
+            .map((item) => [item["title"], item])
+        ).values(),
+      ].sort((a, b) => a.title.localeCompare(b.title))
+    );
+
+    setSubjects(
+      [
+        ...new Map(
+          data.map((elem) => elem.subject).map((item) => [item["title"], item])
+        ).values(),
+      ].sort((a, b) => a.title.localeCompare(b.title))
+    );
+  }, [data]);
+
   const { width, ref } = useResizeDetector({
     refreshMode: "throttle",
     refreshRate: 100,
@@ -56,8 +85,13 @@ export default function Table() {
   const table = useReactTable({
     data,
     columns,
+    state: {
+      columnFilters,
+    },
+    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
     enableFilters: false,
     manualPagination: true,
   });
@@ -87,6 +121,36 @@ export default function Table() {
 
   return (
     <div className="w-full max-w-7xl bg-white p-4">
+      {groups.length && (
+        <select
+          onChange={(event) =>
+            setColumnFilters([
+              ...columnFilters,
+              { id: "groups", value: event.target.value },
+            ])
+          }
+        >
+          <option value="">Hold/klasse</option>
+          {groups.map((group, i) => (
+            <option key={i}>{group.title}</option>
+          ))}
+        </select>
+      )}
+      {subjects.length && (
+        <select
+          onChange={(event) =>
+            setColumnFilters([
+              ...columnFilters,
+              { id: "subject", value: event.target.value },
+            ])
+          }
+        >
+          <option value="">Fag</option>
+          {subjects.map((subject, i) => (
+            <option key={i}>{subject.title}</option>
+          ))}
+        </select>
+      )}
       <div className="w-full overflow-hidden" ref={ref}>
         <table className="w-full border-separate border-spacing-0">
           <thead className="bg-white sticky top-0 z-10 ">
@@ -201,8 +265,10 @@ export default function Table() {
   );
 }
 
-const hasHiddenColumns = (row: Row<Assignment>) => {
-  return row.getAllCells().some((cell) => !cell.column.getIsVisible());
+const hasHiddenColumns = (row?: Row<Assignment>) => {
+  return (
+    row?.getAllCells().some((cell) => !cell.column.getIsVisible()) || false
+  );
 };
 
 const Ellipsis = ({ children }: { children: ReactNode }) => {
@@ -258,6 +324,16 @@ const useColumns = ({
         return <Ellipsis>{text}</Ellipsis>;
       },
       header: "Hold/klasse",
+      filterFn: (
+        row: Row<Assignment>,
+        _columnId: string,
+        filterValue: string
+      ) => {
+        if (filterValue === "") {
+          return true;
+        }
+        return row.original.groups.some((group) => group.title === filterValue);
+      },
     },
     {
       accessorKey: "subject",
@@ -273,6 +349,16 @@ const useColumns = ({
         );
       },
       header: "Fag",
+      filterFn: (
+        row: Row<Assignment>,
+        _columnId: string,
+        filterValue: string
+      ) => {
+        if (filterValue === "") {
+          return true;
+        }
+        return row.original.subject.title === filterValue;
+      },
     },
     {
       accessorKey: "portal",
