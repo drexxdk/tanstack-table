@@ -63,6 +63,7 @@ export default function TableClient({
   }, [ref, table, width]);
 
   const refreshData = async () => {
+    setExpandedRows({});
     setData(await GetTableData());
   };
 
@@ -77,9 +78,9 @@ export default function TableClient({
           <thead className="bg-white sticky top-0 z-10 ">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header, i) => {
-                  return i === 0 &&
-                    hasHiddenColumns(table.getRowModel().rows[0]) === false ? (
+                {headerGroup.headers.map((header, i) =>
+                  i === 0 &&
+                  hasHiddenColumns(table.getRowModel().rows[0]) === false ? (
                     <Fragment key={header.id}></Fragment>
                   ) : (
                     <th
@@ -109,75 +110,68 @@ export default function TableClient({
                         </div>
                       )}
                     </th>
-                  );
-                })}
+                  )
+                )}
               </tr>
             ))}
           </thead>
           <tbody>
-            {table.getRowModel().rows.map((row) => {
-              return (
-                <Fragment key={row.id}>
-                  <tr>
-                    {row.getVisibleCells().map((cell, i) => {
-                      return i === 0 && hasHiddenColumns(row) === false ? (
-                        <Fragment key={cell.id}></Fragment>
-                      ) : (
-                        <td
-                          key={cell.id}
-                          className={classNames(
-                            "border-b border-gray-500 py-2 px-4 relative whitespace-nowrap",
-                            {
-                              "before:content before:absolute before:left-0 before:w-px before:bg-black before:h-4 before:top-1/2 before:-translate-y-1/2":
-                                i !== 0,
-                            },
-                            { "w-full": cell.column.id === "learningMaterial" }
-                          )}
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                  {expandedRows[row.id] && (
-                    <tr>
-                      <td />
+            {table.getRowModel().rows.map((row) => (
+              <Fragment key={row.id}>
+                <tr>
+                  {row.getVisibleCells().map((cell) =>
+                    cell.column.id === "expander" &&
+                    hasHiddenColumns(row) === false ? (
+                      <Fragment key={cell.id}></Fragment>
+                    ) : (
                       <td
-                        colSpan={row.getVisibleCells().length - 1}
-                        className="py-2 px-4"
+                        key={cell.id}
+                        className={classNames(
+                          "border-b border-gray-500 py-2 px-4 relative whitespace-nowrap",
+                          "[&:not(:first-child)]:before:absolute [&:not(:first-child)]:before:left-0 [&:not(:first-child)]:before:w-px [&:not(:first-child)]:before:bg-black [&:not(:first-child)]:before:h-4 [&:not(:first-child)]:before:top-1/2 [&:not(:first-child)]:before:-translate-y-1/2",
+                          { "w-full": cell.column.id === "learningMaterial" }
+                        )}
                       >
-                        <table className="w-full">
-                          <tbody>
-                            {row
-                              .getAllCells()
-                              .filter((cell) => !cell.column.getIsVisible())
-                              .map((cell) => {
-                                return (
-                                  <tr key={cell.id + "a"}>
-                                    <th className="font-bold">
-                                      {cell.column.columnDef.header?.toString()}
-                                      :
-                                    </th>
-                                    <td className="relative w-full">
-                                      {flexRender(
-                                        cell.column.columnDef.cell,
-                                        cell.getContext()
-                                      )}
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                          </tbody>
-                        </table>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
                       </td>
-                    </tr>
+                    )
                   )}
-                </Fragment>
-              );
-            })}
+                </tr>
+                {expandedRows[row.id] && (
+                  <tr>
+                    <td />
+                    <td
+                      colSpan={row.getVisibleCells().length - 1}
+                      className="py-2 px-4"
+                    >
+                      <table className="w-full">
+                        <tbody>
+                          {row
+                            .getAllCells()
+                            .filter((cell) => !cell.column.getIsVisible())
+                            .map((cell) => (
+                              <tr key={cell.id + "a"}>
+                                <th className="font-bold">
+                                  {cell.column.columnDef.header?.toString()}:
+                                </th>
+                                <td className="relative w-full">
+                                  {flexRender(
+                                    cell.column.columnDef.cell,
+                                    cell.getContext()
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
+            ))}
           </tbody>
         </table>
       </div>
@@ -298,36 +292,34 @@ const useColumns = ({
     },
     {
       accessorKey: "id",
-      cell: ({ row }) => {
-        return (
-          <div className="flex gap-2">
-            {row.original.externalManagement ? (
+      cell: ({ row }) => (
+        <div className="flex gap-2">
+          {row.original.externalManagement ? (
+            <button
+              onClick={() => alert(`External management: ${row.original.id}`)}
+              className="bg-blue-500 text-white flex gap-2 items-center text-base px-4 py-2 cursor-pointer hover:bg-blue-400 rounded"
+            >
+              Åbn
+              <FaArrowUpRightFromSquare />
+            </button>
+          ) : (
+            <>
               <button
-                onClick={() => alert(`External management: ${row.original.id}`)}
-                className="bg-blue-500 text-white flex gap-2 items-center text-base px-4 py-2 cursor-pointer hover:bg-blue-400 rounded"
+                onClick={() => alert(`Edit: ${row.original.id}`)}
+                className="bg-blue-500 text-white text-base p-2.5 cursor-pointer hover:bg-blue-400 rounded"
               >
-                Åbn
-                <FaArrowUpRightFromSquare />
+                <FaPen />
               </button>
-            ) : (
-              <>
-                <button
-                  onClick={() => alert(`Edit: ${row.original.id}`)}
-                  className="bg-blue-500 text-white text-base p-2.5 cursor-pointer hover:bg-blue-400 rounded"
-                >
-                  <FaPen />
-                </button>
-                <button
-                  onClick={() => alert(`Delete: ${row.original.id}`)}
-                  className="bg-white text-black text-base p-2.5 cursor-pointer hover:bg-gray-100 inset-ring inset-ring-blue-500 rounded"
-                >
-                  <FaRegTrashCan />
-                </button>
-              </>
-            )}
-          </div>
-        );
-      },
+              <button
+                onClick={() => alert(`Delete: ${row.original.id}`)}
+                className="bg-white text-black text-base p-2.5 cursor-pointer hover:bg-gray-100 inset-ring inset-ring-blue-500 rounded"
+              >
+                <FaRegTrashCan />
+              </button>
+            </>
+          )}
+        </div>
+      ),
       header: "",
       enableSorting: false,
     },
