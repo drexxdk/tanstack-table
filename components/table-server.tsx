@@ -2,7 +2,7 @@ import TableClient from "./table-client";
 import { Assignment } from "@/interfaces/assignment.interface";
 
 export async function GetTableData() {
-  const res = await fetch("http://localhost:3000/table/", {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_ROOT}table/`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
