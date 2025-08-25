@@ -1,12 +1,9 @@
-import TableServer from "@/components/table-server";
+import TableClient from "@/components/table-client";
 
 export default function Home() {
   return (
     <div className="flex justify-center my-4 px-4">
-      <TableServer />
+      <TableClient />
     </div>
   );
 }
-
-/* https://github.com/vercel/next.js/discussions/58936#discussioncomment-7701179 */
-export const dynamic = "force-dynamic";

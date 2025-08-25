@@ -8,7 +8,6 @@ import {
   Row,
   useReactTable,
 } from "@tanstack/react-table";
-import { GetTableData } from "./table-server";
 import { Assignment, Period, Link } from "@/interfaces/assignment.interface";
 import {
   FaArrowUpRightFromSquare,
@@ -25,14 +24,28 @@ import { useResizeDetector } from "react-resize-detector";
 
 const LOCALE = "da-DK";
 
-export default function TableClient({
-  initialData,
-}: {
-  initialData: Assignment[];
-}) {
-  const [data, setData] = useState<Assignment[]>(initialData);
+export async function GetTableData() {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_ROOT}table/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  return (await res.json()) as Assignment[];
+}
+
+export default function TableClient() {
+  const [data, setData] = useState<Assignment[]>([]);
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const columns = useColumns({ expandedRows, setExpandedRows });
+
+  useEffect(() => {
+    async function fetchData() {
+      const initialData = await GetTableData();
+      setData(initialData);
+    }
+    fetchData();
+  }, []);
 
   const { width, ref } = useResizeDetector({
     refreshMode: "throttle",
