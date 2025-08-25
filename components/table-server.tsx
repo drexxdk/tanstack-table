@@ -3,11 +3,10 @@ import { Assignment } from "@/interfaces/assignment.interface";
 
 export async function GetTableData() {
   const res = await fetch("http://localhost:3000/table/", {
-    method: "POST",
+    method: "GET",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ depth: 500 }),
   });
   return (await res.json()) as Assignment[];
 }
