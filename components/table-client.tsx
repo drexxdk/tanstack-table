@@ -155,15 +155,6 @@ export default function TableClient({
                               .getAllCells()
                               .filter((cell) => !cell.column.getIsVisible())
                               .map((cell) => {
-                                const value = cell.getValue<Link[]>();
-
-                                if (cell.column.id === "groups") {
-                                  const xd = flexRender(
-                                    cell.column.columnDef.cell,
-                                    cell.getContext()
-                                  );
-                                  debugger;
-                                }
                                 return (
                                   <tr key={cell.id + "a"}>
                                     <th className="font-bold">
