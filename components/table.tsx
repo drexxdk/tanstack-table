@@ -210,9 +210,10 @@ export default function Table() {
                       <td
                         key={cell.id}
                         className={classNames(
-                          "border-b border-gray-500 py-2 px-4 relative whitespace-nowrap",
+                          " py-2 px-4 relative whitespace-nowrap",
                           "[&:not(:first-child)]:before:absolute [&:not(:first-child)]:before:left-0 [&:not(:first-child)]:before:w-px [&:not(:first-child)]:before:bg-black [&:not(:first-child)]:before:h-4 [&:not(:first-child)]:before:top-1/2 [&:not(:first-child)]:before:-translate-y-1/2",
-                          { "w-full": cell.column.id === "learningMaterial" }
+                          { "w-full": cell.column.id === "learningMaterial" },
+                          { "border-b border-gray-500": !expandedRows[row.id] }
                         )}
                       >
                         {flexRender(
@@ -225,10 +226,10 @@ export default function Table() {
                 </tr>
                 {expandedRows[row.id] && (
                   <tr>
-                    <td />
+                    <td className="border-b border-gray-500" />
                     <td
                       colSpan={row.getVisibleCells().length - 1}
-                      className="py-2 px-4"
+                      className="py-2 px-4 border-b border-gray-500"
                     >
                       <table className="w-full">
                         <tbody>
