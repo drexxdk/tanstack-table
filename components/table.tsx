@@ -287,6 +287,19 @@ const Ellipsis = ({ children }: { children: ReactNode }) => {
   );
 };
 
+const ExternalLink = ({ link }: { link: Link }) => {
+  return (
+    <a
+      href={link.url}
+      target="_blank"
+      className="underline hover:no-underline"
+      title={link.title}
+    >
+      {link.title}
+    </a>
+  );
+};
+
 const useColumns = ({
   expandedRows,
   setExpandedRows,
@@ -348,9 +361,7 @@ const useColumns = ({
 
         return (
           <Ellipsis>
-            <a href={link.url} target="_blank">
-              {link.title}
-            </a>
+            <ExternalLink link={link} />
           </Ellipsis>
         );
       },
@@ -373,9 +384,7 @@ const useColumns = ({
 
         return (
           <Ellipsis>
-            <a href={link.url} target="_blank">
-              {link.title}
-            </a>
+            <ExternalLink link={link} />
           </Ellipsis>
         );
       },
@@ -388,9 +397,7 @@ const useColumns = ({
 
         return (
           <Ellipsis>
-            <a href={link.url} target="_blank" className="font-bold">
-              {link.title}
-            </a>
+            <ExternalLink link={link} />
           </Ellipsis>
         );
       },
@@ -411,7 +418,7 @@ const useColumns = ({
     {
       accessorKey: "id",
       cell: ({ row }) => (
-        <div className="flex gap-2">
+        <div className="flex gap-2 justify-end">
           {row.original.externalManagement ? (
             <button
               onClick={() => alert(`External management: ${row.original.id}`)}
